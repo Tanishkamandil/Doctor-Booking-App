@@ -3,13 +3,14 @@ import { AppContext } from "../context/AppContext";
 import axios from "axios";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useNavigate } from "react-router-dom";
 
 const MyAppointment = () => {
   const { backendUrl, token, getDoctorsData } = useContext(AppContext);
   const [appointments, setAppointments] = useState([]);
-  const [loading, setLoading] = useState(false);
+
   const months = [
-    " ",
+    "",
     "Jan",
     "Feb",
     "Mar",
@@ -24,43 +25,42 @@ const MyAppointment = () => {
     "Dec",
   ];
 
+  // Updated slot date format
   const slotDateFormat = (slotDate) => {
-    const dateArray = slotDate.split("_");
-    return (
-      dateArray[0] + " " + months[Number(dateArray[1])] + " " + dateArray[2]
-    );
+    if (!slotDate) return "";
+    const [day, month, year] = slotDate.split("-");
+    return `${day} ${months[Number(month)]} ${year}`;
   };
 
+  const navigate = useNavigate();
+
   const getUserAppointments = async () => {
-    if (!token) return;
+    if (!token) return toast.error("User token missing");
 
     try {
-      setLoading(true);
-      const { data } = await axios.get(backendUrl + "/api/user/appointments", {
+      const { data } = await axios.get(`${backendUrl}/api/user/appointments`, {
         headers: { token },
       });
 
       console.log("Appointments API Response:", data);
 
-      if (data.success) {
+      if (data.success && data.appointments) {
         setAppointments(data.appointments.reverse());
       } else {
         toast.error(data.message || "Failed to fetch appointments");
+        setAppointments([]);
       }
     } catch (error) {
       console.error("Error fetching appointments:", error);
-      toast.error(
-        error.response?.data?.message || "Something went wrong while fetching"
-      );
+      toast.error(error.response?.data?.message || "Something went wrong");
     } finally {
-      setLoading(false);
     }
   };
 
   const cancelAppointment = async (appointmentId) => {
     try {
       const { data } = await axios.post(
-        backendUrl + "/api/user/cancel-appointment",
+        `${backendUrl}/api/user/cancel-appointment`,
         { appointmentId },
         { headers: { token } }
       );
@@ -76,7 +76,63 @@ const MyAppointment = () => {
       }
     } catch (error) {
       console.error(error);
-      toast.error(error.response?.data?.message);
+      toast.error(
+        error.response?.data?.message || "Error cancelling appointment"
+      );
+    }
+  };
+
+  const initPay = (order) => {
+    const options = {
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+      amount: order.amount,
+      currency: order.currency,
+      name: "Appointment Payment",
+      description: "Appointment Payment",
+      receipt: order.receipt,
+      order_id: order.id,
+      handler: async (response) => {
+        console.log("Razorpay Payment Response:", response);
+        try {
+          const { data } = await axios.post(
+            backendUrl + "/api/user/verifyRazorpay",
+            response,
+            { headers: { token } }
+          );
+          if (data.success) {
+            getUserAppointments();
+            navigate("/my-appointments");
+          }
+        } catch (error) {
+          console.log(error);
+          toast.error(error.message);
+        }
+      },
+    };
+    const rzp = new window.Razorpay(options);
+    rzp.open();
+  };
+
+  const appointmentRazorpay = async (appointmentId) => {
+    try {
+      const { data } = await axios.post(
+        `${backendUrl}/api/user/payment-razorpay`,
+        { appointmentId },
+        { headers: { token } }
+      );
+
+      console.log("Razorpay API Response:", data);
+
+      if (data.success && data.order) {
+        initPay(data.order);
+      } else {
+        toast.error(data.message || "Failed to create payment order");
+      }
+    } catch (error) {
+      console.error("Error creating Razorpay order:", error);
+      toast.error(
+        error.response?.data?.message || "Payment order creation failed"
+      );
     }
   };
 
@@ -89,12 +145,7 @@ const MyAppointment = () => {
       <p className="pb-3 mt-12 font-medium text-zinc-700 border-b">
         My Appointments
       </p>
-
-      {loading ? (
-        <p className="text-center text-gray-500 mt-8">
-          Loading appointments...
-        </p>
-      ) : appointments.length === 0 ? (
+      {appointments.length === 0 ? (
         <p className="text-center text-gray-500 mt-8">No appointments found.</p>
       ) : (
         <div>
@@ -107,7 +158,7 @@ const MyAppointment = () => {
               <div>
                 <img
                   className="w-32 bg-indigo-50 rounded-lg"
-                  src={item.docData?.image}
+                  src={item.docData?.image || "/default-doctor.png"}
                   alt={item.docData?.name || "Doctor"}
                 />
               </div>
@@ -115,24 +166,32 @@ const MyAppointment = () => {
               {/* Doctor Info */}
               <div className="flex-1 text-sm text-zinc-600">
                 <p className="text-neutral-800 font-semibold">
-                  {item.docData?.name}
+                  {item.docData?.name || "Unknown Doctor"}
                 </p>
-                <p>{item.docData?.speciality}</p>
+                <p>{item.docData?.speciality || "-"}</p>
                 <p className="text-zinc-700 font-medium mt-1">Address:</p>
-                <p className="text-xs">{item.docData?.address?.line1}</p>
-                <p className="text-xs">{item.docData?.address?.line2}</p>
+                <p className="text-xs">{item.docData?.address?.line1 || "-"}</p>
+                <p className="text-xs">{item.docData?.address?.line2 || "-"}</p>
                 <p className="text-xs mt-1">
                   <span className="text-sm text-neutral-700 font-medium">
                     Date & Time:
                   </span>{" "}
-                  {item.slotDate} | {item.slotTime}
+                  {slotDateFormat(item.slotDate)} | {item.slotTime || "-"}
                 </p>
               </div>
 
               {/* Buttons */}
               <div className="flex flex-col gap-2 justify-end">
-                {!item.cancelled && (
-                  <button className="text-sm text-stone-500 text-center sm:min-w-48 py-2 border hover:bg-primary hover:text-white transition-all duration-300">
+                {!item.cancelled && item.payment && (
+                  <button className="sm:min-w-48 py-2 border rounded text-stone-500 bg-indigo-50">
+                    Paid
+                  </button>
+                )}
+                {!item.cancelled && !item.payment && (
+                  <button
+                    onClick={() => appointmentRazorpay(item._id)}
+                    className="text-sm text-stone-500 text-center sm:min-w-48 py-2 border hover:bg-primary hover:text-white transition-all duration-300"
+                  >
                     Pay Online
                   </button>
                 )}
