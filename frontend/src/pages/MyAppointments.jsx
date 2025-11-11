@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 const MyAppointment = () => {
   const { backendUrl, token, getDoctorsData } = useContext(AppContext);
   const [appointments, setAppointments] = useState([]);
+  const navigate = useNavigate();
 
   const months = [
     "",
@@ -25,14 +26,11 @@ const MyAppointment = () => {
     "Dec",
   ];
 
-  // Updated slot date format
   const slotDateFormat = (slotDate) => {
     if (!slotDate) return "";
     const [day, month, year] = slotDate.split("-");
     return `${day} ${months[Number(month)]} ${year}`;
   };
-
-  const navigate = useNavigate();
 
   const getUserAppointments = async () => {
     if (!token) return toast.error("User token missing");
@@ -53,7 +51,6 @@ const MyAppointment = () => {
     } catch (error) {
       console.error("Error fetching appointments:", error);
       toast.error(error.response?.data?.message || "Something went wrong");
-    } finally {
     }
   };
 
@@ -145,6 +142,7 @@ const MyAppointment = () => {
       <p className="pb-3 mt-12 font-medium text-zinc-700 border-b">
         My Appointments
       </p>
+
       {appointments.length === 0 ? (
         <p className="text-center text-gray-500 mt-8">No appointments found.</p>
       ) : (
@@ -182,12 +180,13 @@ const MyAppointment = () => {
 
               {/* Buttons */}
               <div className="flex flex-col gap-2 justify-end">
-                {!item.cancelled && item.payment && (
+                {!item.cancelled && item.payment && !item.isCompleted && (
                   <button className="sm:min-w-48 py-2 border rounded text-stone-500 bg-indigo-50">
                     Paid
                   </button>
                 )}
-                {!item.cancelled && !item.payment && (
+
+                {!item.cancelled && !item.payment && !item.isCompleted && (
                   <button
                     onClick={() => appointmentRazorpay(item._id)}
                     className="text-sm text-stone-500 text-center sm:min-w-48 py-2 border hover:bg-primary hover:text-white transition-all duration-300"
@@ -195,7 +194,8 @@ const MyAppointment = () => {
                     Pay Online
                   </button>
                 )}
-                {!item.cancelled && (
+
+                {!item.cancelled && !item.isCompleted && (
                   <button
                     onClick={() => cancelAppointment(item._id)}
                     className="text-sm text-stone-500 text-center sm:min-w-48 py-2 border hover:bg-red-600 hover:text-white transition-all duration-300"
@@ -203,10 +203,17 @@ const MyAppointment = () => {
                     Cancel Appointment
                   </button>
                 )}
-                {item.cancelled && (
+
+                {item.cancelled && !item.isCompleted && (
                   <div className="text-sm text-red-500 font-medium text-center sm:min-w-48 py-2 border border-red-600">
                     Appointment Cancelled
                   </div>
+                )}
+
+                {item.isCompleted && (
+                  <button className="text-sm text-green-600 font-medium text-center sm:min-w-48 py-2 border border-green-600">
+                    Appointment Completed
+                  </button>
                 )}
               </div>
             </div>
