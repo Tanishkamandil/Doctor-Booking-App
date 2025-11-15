@@ -6,45 +6,49 @@ import { AppContext } from "../context/AppContext";
 const Navbar = () => {
   const navigate = useNavigate();
   const { token, setToken, userData } = useContext(AppContext);
-  const [showMenu, setShowMenu] = useState(false); // later will be used for mobile menu
+  const [showMenu, setShowMenu] = useState(false);
+
   const logout = () => {
     setToken(false);
     localStorage.removeItem("token");
   };
 
   return (
-    <div className="flex items-center justify-between py-4 text-sm mb-5 border-b border-b-gray-400">
+    <div className="flex items-center justify-between py-4 text-sm mb-5 border-b border-b-gray-400 px-2">
+      {/* Logo */}
       <img
         onClick={() => navigate("/")}
-        className="w-44 cursor-pointer"
+        className="w-32 sm:w-40 cursor-pointer"
         src={assets.logo}
         alt="Logo navbar"
       />
-      <ul className="hidden md:flex items-start gap-5 font-medium ">
+
+      {/* Desktop Menu */}
+      <ul className="hidden md:flex items-start gap-5 font-medium">
         <NavLink to="/">
           <li className="py-1">HOME</li>
-          <hr className="border-none outline-none h-0.5 bg-primary w-3/5 m-auto hidden " />
         </NavLink>
         <NavLink to="/doctors">
           <li className="py-1">ALL DOCTORS</li>
-          <hr className="border-none outline-none h-0.5 bg-primary w-3/5 m-auto hidden" />
         </NavLink>
         <NavLink to="/about">
           <li className="py-1">ABOUT</li>
-          <hr className="border-none outline-none h-0.5 bg-primary w-3/5 m-auto hidden" />
         </NavLink>
         <NavLink to="/contact">
           <li className="py-1">CONTACT</li>
-          <hr className="border-none outline-none h-0.5 bg-primary w-3/5 m-auto hidden" />
         </NavLink>
       </ul>
+
+      {/* Right Section */}
       <div className="items-center flex gap-4">
         {token && userData ? (
           <div className="flex items-center gap-2 cursor-pointer group relative">
             <img className="w-8 rounded-full" src={userData.image} alt="" />
             <img className="w-2.5" src={assets.dropdown_icon} alt="dropdown" />
+
+            {/* Dropdown */}
             <div className="absolute top-0 right-0 pt-14 text-base font-medium text-gray-600 z-20 hidden group-hover:block">
-              <div className="min-w-48 bg-stone-100 rounded flex flex-col gap-4 p-4">
+              <div className="min-w-48 bg-stone-100 rounded flex flex-col gap-4 p-4 shadow-lg">
                 <p
                   onClick={() => navigate("my-profile")}
                   className="hover:text-black cursor-pointer"
@@ -66,44 +70,47 @@ const Navbar = () => {
         ) : (
           <button
             onClick={() => navigate("/login")}
-            className="bg-primary text-white py-3 px-8 rounded-full font-light hidden md:block"
+            className="bg-primary text-white py-2 px-6 rounded-full font-light hidden md:block"
           >
             Create Account
           </button>
         )}
+
+        {/* Mobile Menu Icon */}
         <img
           onClick={() => setShowMenu(true)}
           className="w-6 md:hidden"
           src={assets.menu_icon}
           alt=""
         />
-        {/*- Mobile Menu -*/}
+
+        {/* Mobile Menu */}
         <div
-          className={` ${
-            showMenu ? "fixed w-full" : "h-0 w-0"
-          }md:hidden right-0 top-0 bottom-0 z-20 overflow-hidden bg-white transition-all`}
+          className={`fixed top-0 bottom-0 right-0 bg-white z-30 transition-all duration-300
+          ${showMenu ? "w-3/4 shadow-xl" : "w-0"} overflow-hidden`}
         >
           <div className="flex items-center justify-between px-5 py-6">
-            <img className="w-36" src={assets.logo} alt="" />
+            <img className="w-32" src={assets.logo} alt="" />
             <img
               onClick={() => setShowMenu(false)}
-              className="w-7"
+              className="w-7 cursor-pointer"
               src={assets.cross_icon}
               alt=""
             />
           </div>
-          <ul className="flex flex-col items-center gap-2 mt-5 px-5 text-lg font-medium">
+
+          <ul className="flex flex-col items-start gap-4 mt-5 px-5 text-lg font-medium">
             <NavLink onClick={() => setShowMenu(false)} to="/">
-              <p className="px-4 py-2 rounded inline-block ">Home</p>
+              <p>Home</p>
             </NavLink>
             <NavLink onClick={() => setShowMenu(false)} to="/doctors">
-              <p className="px-4 py-2 rounded inline-block ">All Doctors</p>
+              <p>All Doctors</p>
             </NavLink>
             <NavLink onClick={() => setShowMenu(false)} to="/about">
-              <p className="px-4 py-2 rounded inline-block ">About</p>
+              <p>About</p>
             </NavLink>
             <NavLink onClick={() => setShowMenu(false)} to="/contact">
-              <p className="px-4 py-2 rounded inline-block ">Contact</p>
+              <p>Contact</p>
             </NavLink>
           </ul>
         </div>

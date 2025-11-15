@@ -11,26 +11,35 @@ const Navbar = () => {
 
   const logout = () => {
     navigate("/");
-    aToken && setAToken("");
-    dToken && setDToken("");
-    aToken && localStorage.removeItem("aToken");
-    dToken && localStorage.removeItem("dToken");
+    if (aToken) {
+      setAToken("");
+      localStorage.removeItem("aToken");
+    }
+    if (dToken) {
+      setDToken("");
+      localStorage.removeItem("dToken");
+    }
   };
+
   return (
-    <div className="flex justify-between items-center px-4 sm:px-10 py-3 border-b bg-white ">
-      <div className="flex items-center gap-2 text-xs">
+    <div className="flex flex-wrap justify-between items-center px-4 sm:px-10 py-3 border-b bg-white gap-3">
+      {/* Left Section */}
+      <div className="flex items-center gap-3 text-xs">
         <img
-          className="w-36 sm:w-40 cursor-pointer"
+          className="w-32 sm:w-40 cursor-pointer"
           src={assets.admin_logo}
           alt=""
         />
-        <p className="border px-2.5py-0.5 rounded-full  border-gray-500 text-gray-600">
+
+        <p className="border px-3 py-1 rounded-full border-gray-500 text-gray-600 whitespace-nowrap">
           {aToken ? "Admin" : "Doctor"}
         </p>
       </div>
+
+      {/* Right Section */}
       <button
         onClick={logout}
-        className="bg-primary text-white text-sm px-10 py-2 rounded-full "
+        className="bg-primary text-white text-sm px-8 sm:px-10 py-2 rounded-full w-full sm:w-auto"
       >
         Logout
       </button>
