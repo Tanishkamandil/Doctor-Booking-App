@@ -45,32 +45,32 @@ const loginDoctor = async (req, res) => {
     // find doctor by email
     const doctor = await doctorModel.findOne({ email });
 
-    // log for debugging
-    console.log("Email entered:", email);
-    console.log("Doctor found:", doctor ? doctor.email : "None");
-
     if (!doctor) {
       return res.json({ success: false, message: "Invalid credentials" });
     }
 
     // compare password
     const isMatch = await bcrypt.compare(password, doctor.password);
-    console.log("Password match:", isMatch);
 
-    if (isMatch) {
-      // generate JWT token
-      const token = jwt.sign({ id: doctor._id }, process.env.JWT_SECRET, {
-        expiresIn: "7d",
-      });
-      return res.json({ success: true, token });
-    } else {
+    if (!isMatch) {
       return res.json({ success: false, message: "Invalid credentials" });
     }
+
+    const token = jwt.sign(
+      {
+        id: doctor._id.toString(),
+        role: "doctor",
+      },
+      process.env.JWT_SECRET
+    );
+
+    return res.json({ success: true, token });
   } catch (error) {
     console.log(error);
     res.json({ success: false, message: error.message });
   }
 };
+
 //API  to get doctor appointment for doctor panel
 const appointmentsDoctor = async (req, res) => {
   try {

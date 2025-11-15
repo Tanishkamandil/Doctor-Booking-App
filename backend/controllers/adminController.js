@@ -98,6 +98,7 @@ const addDoctor = async (req, res) => {
 };
 
 // API for admin login
+// API for admin login
 const loginAdmin = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -106,14 +107,16 @@ const loginAdmin = async (req, res) => {
       email === process.env.ADMIN_EMAIL &&
       password === process.env.ADMIN_PASSWORD
     ) {
-      const token = jwt.sign(email + password, process.env.JWT_SECRET);
-      res.json({ success: true, token });
-    } else {
-      res.json({ success: false, message: "Invalid credentials" });
+      // permanent token (never expires)
+      const token = jwt.sign({ role: "admin", email }, process.env.JWT_SECRET);
+
+      return res.json({ success: true, token });
     }
+
+    return res.json({ success: false, message: "Invalid credentials" });
   } catch (error) {
     console.log(error);
-    res.json({ success: false, message: error.message });
+    return res.json({ success: false, message: error.message });
   }
 };
 

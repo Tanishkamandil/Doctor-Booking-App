@@ -7,6 +7,7 @@ import doctorModel from "../models/doctorModel.js";
 import appointmentModel from "../models/appointmentModel.js";
 import Razorpay from "razorpay";
 // Register User
+
 const registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -39,9 +40,11 @@ const registerUser = async (req, res) => {
 
     const user = await newUser.save();
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    // ⭐ PERMANENT TOKEN — NO EXPIRY
+    const token = jwt.sign(
+      { id: user._id.toString(), role: "user" },
+      process.env.JWT_SECRET
+    );
 
     res.json({ success: true, token });
   } catch (error) {
@@ -51,6 +54,7 @@ const registerUser = async (req, res) => {
 };
 
 // Login User (fixed)
+
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -65,9 +69,11 @@ const loginUser = async (req, res) => {
       return res.json({ success: false, message: "Invalid credentials" });
     }
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    // ⭐ PERMANENT JWT — NO EXPIRY
+    const token = jwt.sign(
+      { id: user._id.toString(), role: "user" },
+      process.env.JWT_SECRET
+    );
 
     res.json({ success: true, token });
   } catch (error) {
@@ -75,6 +81,7 @@ const loginUser = async (req, res) => {
     res.json({ success: false, message: error.message });
   }
 };
+
 //API to get user profile data
 const getUserProfile = async (req, res) => {
   try {
