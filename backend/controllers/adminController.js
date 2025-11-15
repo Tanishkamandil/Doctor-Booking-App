@@ -98,7 +98,6 @@ const addDoctor = async (req, res) => {
 };
 
 // API for admin login
-// API for admin login
 const loginAdmin = async (req, res) => {
   try {
     const { email, password } = req.body;
